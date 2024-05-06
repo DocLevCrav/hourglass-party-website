@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" href="favicon.ico" />
+    <!-- <script src="index.js" defer></script> -->
+    <title>⌛...</title>
+  </head>
+  <body>
+    <div class="suggestions-container">
+      <a
+        class="suggestions"
+        href="https://forms.gle/hTvVoAC5jZ8w6msU9"
+        target="_blank"
+      >
+        Any suggestions <br />
+        for the next school year?
+      </a>
+    </div>
+
+    <div class="poster-container">
+      <div class="execom-container">
+        <img class="poster" src="assets/posters/1.png" alt="Tobey" />
+        <img class="poster" src="assets/posters/2.png" alt="Bella" />
+        <img class="poster" src="assets/posters/3.png" alt="Mateo" />
+        <img class="poster" src="assets/posters/4.png" alt="Brendan" />
+      </div>
+      <div class="batch-rep-container">
+        <img class="poster" src="assets/posters/5.png" alt="poster 2" />
+        <img class="poster" src="assets/posters/6.png" alt="poster 2" />
+        <img class="poster" src="assets/posters/7.png" alt="poster 2" />
+      </div>
+    </div>
+
+    <div class="logo-container">
+      <a href="index.html">
+        <img class="logo" src="assets/hourglass party logo.png" alt="" />
+      </a>
+    </div>
+    <script>
+      const poster = document.querySelectorAll('.poster')
+
+      poster.forEach(p => {
+        p.addEventListener('click', () => {
+          window.open(p.src, '_blank')
+        })
+      })
+    </script>
+  </body>
+</html>

@@ -1,10 +1,10 @@
 let startDate = new Date(2023, 3, 27, 14, 20, 0, 0)
 let endDate = new Date(2024, 4, 10, 17, 0, 0, 0)
 
-//let startDate = new Date(2024, 4, 5, 10, 24, 0, 0)
-//let endDate = new Date(2024, 4, 5, 10, 24, 50, 0)
+//let startDate = new Date()
+//let endDate = new Date(startDate.getTime() + 5000)
 
-const totalDiff = new Date(endDate.getTime() - startDate.getTime())
+let totalDiff = new Date(endDate.getTime() - startDate.getTime())
 const countdownContainer = document.querySelector('.countdown-container')
 let currentDate = new Date()
 let timeDiff = new Date(endDate.getTime() - currentDate.getTime())
@@ -14,14 +14,23 @@ const ctx = canvas.getContext('2d')
 
 const sandColor = '#e3af20'
 
+let sandParticles = []
+
+let frozen = false
+
 function draw() {
+  if (frozen) {
+    requestAnimationFrame(draw)
+    return
+  }
   canvas.width = parseFloat(getComputedStyle(canvas).width.replace('px', ''))
   canvas.height = parseFloat(getComputedStyle(canvas).height.replace('px', ''))
 
   xCenter = canvas.width / 2
   yCenter = canvas.height / 2
+  //yCenter = canvas.height / 2 - 250
 
-  scale = Math.min(canvas.height * 1.3, canvas.width * 1.4) / 2
+  scale = Math.min(canvas.height * 1.3, canvas.width * 2) / 1.75
   //scale = Math.min(canvas.height * 1.3, canvas.width * 1.4) / 4
 
   margin = scale / 40
@@ -29,8 +38,6 @@ function draw() {
   hourglassHeight = (scale * 3) / 5
   angleHeight = hourglassWidth / 2
   straightHeight = hourglassHeight - angleHeight
-  bottom = canvas.height / 2 - hourglassHeight - margin * 4
-  //bottom = 0
 
   ctx.reset()
 
@@ -58,18 +65,23 @@ function drawSand() {
   )
   let usedArea = Math.min(Math.max(totalArea - remainderArea, 0), totalArea)
 
-  //console.log(remainderArea + ' ' + angleArea)
   if (remainderArea <= 0) {
     trigger()
   } else {
     ctx.fillStyle = sandColor
 
-    ctx.fillRect(
-      xCenter - margin / 2,
-      yCenter - margin * Math.sqrt(2),
-      margin,
-      margin * (3 * Math.sqrt(2) - 2) + hourglassHeight
+    sandParticles.push(
+      new SandParticle(
+        xCenter + Math.random() * margin - margin / 2,
+        yCenter - margin * Math.sqrt(2),
+        (4 * Math.PI) / 3 + (Math.random() * Math.PI) / 3,
+        5
+      )
     )
+    for (let i = 0; i < sandParticles.length; i++) {
+      sandParticles[i].draw()
+      sandParticles[i].move()
+    }
 
     if (remainderArea < angleArea) {
       let triangleHeight = Math.sqrt(remainderArea + trickleArea)
@@ -97,7 +109,7 @@ function drawSand() {
           margin * (2 - 2 * Math.sqrt(2)) -
           rectangleHeight -
           angleHeight -
-          0.5, //Fix
+          0.5,
         hourglassWidth,
         rectangleHeight + 1.5
       )
@@ -117,7 +129,6 @@ function drawSand() {
     }
   }
 
-  //Fix this
   if (usedArea < angleArea) {
     let triangleHeight = Math.sqrt(usedArea + trickleArea)
 
@@ -184,8 +195,6 @@ function drawSand() {
     ctx.fill()
   }
 }
-
-document.onclick = trigger
 
 function drawHourglass() {
   ctx.fillStyle = '#cdcdcd'
@@ -295,7 +304,7 @@ function updateTimer() {
   countdownContainer.innerHTML = ''
   let timeArray = parseTimer().split(' ')
   // split each element of the array into individual digits
-  timeArray = timeArray.map((time) => time.split(''))
+  timeArray = timeArray.map(time => time.split(''))
 
   function createTimeElement(time, className, unit, digits) {
     let timeElement = document.createElement('span')
@@ -324,17 +333,89 @@ function updateTimer() {
 
 function trigger() {
   const spinSpeed = 5000 // ms
-  const r = document.querySelector(':root')
-  r.style.setProperty('--spin-speed', spinSpeed / 1000 + 's')
+  countdownContainer.style.opacity = 0
 
-  const canvasContainer = document.querySelector('.canvas-container')
-  canvasContainer.classList.add('spin')
   setTimeout(() => {
-    // canvasContainer.classList.remove('spin')
+    const r = document.querySelector(':root')
+    r.style.setProperty('--spin-speed', spinSpeed / 1000 + 's')
 
-    startDate = new Date(2024, 4, 10, 17, 0, 0, 0)
-    endDate = new Date(2025, 4, 10, 17, 0, 0, 0)
-  }, spinSpeed)
+    const canvasContainer = document.querySelector('.canvas-container')
+    canvasContainer.classList.add('spin')
+    frozen = true
+    setTimeout(() => {
+      startDate = new Date()
+      endDate = new Date()
+      endDate.setFullYear(startDate.getFullYear() + 1)
+      //endDate.setSeconds(startDate.getSeconds() + 7)
+      currentDate = new Date() //New Date
+      timeDiff = new Date(endDate.getTime() - currentDate.getTime())
+      totalDiff = new Date(endDate.getTime() - startDate.getTime())
+      updateTimer()
+      canvasContainer.classList.remove('spin') // returns it
+      frozen = false
+      countdownContainer.style.opacity = 1
+    }, spinSpeed)
+  }, 1000)
 }
 
+class SandParticle {
+  constructor(x, y, angle, speed) {
+    this.x = x
+    this.y = y
+    this.angle = angle
+    this.speed = speed
+    this.size = scale / 175
+
+    this.xRatio = this.x / canvas.width
+    this.yRatio = this.y / canvas.height
+
+    this.dx = speed * Math.cos(this.angle)
+    this.dy = speed * -Math.sin(this.angle)
+    sandParticles.push(this)
+  }
+
+  move() {
+    this.x = this.xRatio * canvas.width
+    this.y = this.yRatio * canvas.height
+
+    if (
+      this.x + this.dx <= xCenter - margin / 2 ||
+      this.x + this.dx >= xCenter + margin / 2
+    ) {
+      this.dx = -this.dx
+      return
+    }
+
+    if (
+      this.y + this.dy >=
+      yCenter + margin * (2 * Math.sqrt(2) - 2) + hourglassHeight - 3
+    ) {
+      sandParticles.splice(sandParticles.indexOf(this), 1)
+      return
+    }
+
+    this.x += this.dx
+    this.y += this.dy
+
+    this.xRatio = this.x / canvas.width
+    this.yRatio = this.y / canvas.height
+  }
+
+  draw() {
+    this.size = scale / 175
+
+    ctx.fillStyle = sandColor
+    ctx.fillRect(
+      this.x - this.size / 2,
+      this.y - this.size / 2,
+      this.size,
+      this.size
+    )
+  }
+}
+
+updateTimer()
+
 draw()
+
+//document.onclick = trigger
